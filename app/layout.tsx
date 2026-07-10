@@ -16,7 +16,6 @@ export const metadata: Metadata = {
   title: "Humble Health Solutions",
   description:
     "Enterprise healthcare compliance software for continuous survey readiness.",
-}
 };
 
 export default function RootLayout({
