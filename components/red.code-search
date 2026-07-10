@@ -1,0 +1,85 @@
+# Query: red
+# ContextLines: 1
+
+20 results - 7 files
+
+package-lock.json:
+  3065          "is-set": "^2.0.3",
+  3066:         "is-shared-array-buffer": "^1.0.4",
+  3067          "is-string": "^1.1.1",
+
+  4475      },
+  4476:     "node_modules/is-shared-array-buffer": {
+  4477        "version": "1.0.4",
+  4478:       "resolved": "https://registry.npmjs.org/is-shared-array-buffer/-/is-shared-array-buffer-1.0.4.tgz",
+  4479        "integrity": "sha512-ISWac8drv4ZGfwKl5slpHG9OwPNty4jOWPRIhBpxOoD+hqITiwuipOQ2bNthAzwA3B4fIjO4Nln74N0S9byq8A==",
+
+app/globals.css:
+  10    --hhs-navy: #0F172A;
+  11:   --hhs-red: #DC2626;
+  12    --hhs-gray: #64748B;
+
+components/DragDropSurveyReady:
+   5          <div>
+   6:           <p className="text-sm font-bold uppercase tracking-widest text-red-400">
+   7              Evidence Management
+
+  19  
+  20:           <button className="mt-8 rounded-xl bg-red-600 px-7 py-4 font-semibold text-white">
+  21              Add Evidence
+
+components/ExecutiveCommandCenter.tsx:
+   6  				<div className="mb-12">
+   7: 					<p className="text-sm font-bold uppercase tracking-widest text-teal-600">
+   8  						Executive Command Center
+
+  41  							].map((item) => (
+  42: 								<div key={item} className="rounded-xl bg-teal-50 p-4 text-sm font-semibold text-teal-800">
+  43  									{item}
+
+  63  									<div className="h-2 rounded-full bg-slate-100">
+  64: 										<div className="h-2 rounded-full bg-teal-600" style={{ width: score }} />
+  65  									</div>
+
+components/PlatformPreview.tsx:
+   7          <div className="mb-12">
+   8:           <p className="text-sm font-bold uppercase tracking-widest text-teal-400">
+   9              HHS Command Center
+
+  22              ["Survey Readiness", "96%", "text-green-400"],
+  23:             ["Open Findings", "12", "text-red-400"],
+  24              ["Evidence Files", "2,518", "text-blue-300"],
+
+  47                    <div className="h-3 rounded-full bg-slate-100">
+  48:                     <div className="h-3 rounded-full bg-teal-600" style={{ width: value }} />
+  49                    </div>
+
+components/Pricing.tsx:
+   5          <div className="mb-12 text-center">
+   6:           <p className="text-sm font-bold uppercase tracking-widest text-teal-600">
+   7              Pricing
+
+  24                <h3 className="text-2xl font-bold text-slate-950">{plan}</h3>
+  25:               <p className="mt-4 text-4xl font-bold text-red-600">{price}</p>
+  26                <p className="mt-5 text-slate-600">{description}</p>
+
+components/StandardsEvidence.tsx:
+   5          <div className="mb-12">
+   6:           <p className="text-sm font-bold uppercase tracking-widest text-teal-600">
+   7              Standards & Evidence
+
+  12            <p className="mt-5 max-w-3xl text-xl text-slate-600">
+  13:             Break accreditation requirements into chapters, assign owners, upload evidence, and see readiness by standard.
+  14            </p>
+
+  18            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+  19:             <h3 className="mb-5 text-xl font-bold">CMS / Accreditation Chapters</h3>
+  20  
+
+  33                  <div className="h-2 rounded-full bg-slate-100">
+  34:                   <div className="h-2 rounded-full bg-teal-600" style={{ width: score }} />
+  35                  </div>
+
+  45                </div>
+  46:               <button className="rounded-xl bg-teal-600 px-5 py-3 font-semibold text-white">
+  47                  Add Evidence

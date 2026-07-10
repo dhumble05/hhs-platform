@@ -1,0 +1,45 @@
+# Query: red-600
+# ContextLines: 1
+
+9 results - 5 files
+
+components/DragDropSurveyReady:
+  19  
+  20:           <button className="mt-8 rounded-xl bg-teal-700 px-7 py-4 font-semibold text-white">
+  21              Add Evidence
+
+components/ExecutiveCommandCenter.tsx:
+   6  				<div className="mb-12">
+   7: 					<p className="text-sm font-bold uppercase tracking-widest text-red-600">
+   8  						Executive Command Center
+
+  63  									<div className="h-2 rounded-full bg-slate-100">
+  64: 										<div className="h-2 rounded-full bg-teal-700" style={{ width: score }} />
+  65  									</div>
+
+components/PlatformPreview.tsx:
+  47                    <div className="h-3 rounded-full bg-slate-100">
+  48:                     <div className="h-3 rounded-full bg-teal-700" style={{ width: value }} />
+  49                    </div>
+
+components/Pricing.tsx:
+   5          <div className="mb-12 text-center">
+   6:           <p className="text-sm font-bold uppercase tracking-widest text-teal-700">
+   7              Pricing
+
+  24                <h3 className="text-2xl font-bold text-slate-950">{plan}</h3>
+  25:               <p className="mt-4 text-4xl font-bold text-teal-700">{price}</p>
+  26                <p className="mt-5 text-slate-600">{description}</p>
+
+components/StandardsEvidence.tsx:
+   5          <div className="mb-12">
+   6:           <p className="text-sm font-bold uppercase tracking-widest text-teal-700">
+   7              Standards & Evidence
+
+  33                  <div className="h-2 rounded-full bg-slate-100">
+  34:                   <div className="h-2 rounded-full bg-teal-700" style={{ width: score }} />
+  35                  </div>
+
+  45                </div>
+  46:               <button className="rounded-xl bg-teal-700 px-5 py-3 font-semibold text-white">
+  47                  Add Evidence

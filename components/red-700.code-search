@@ -1,0 +1,9 @@
+# Query: red-700
+# ContextLines: 1
+
+1 result - 1 file
+
+components/ExecutiveCommandCenter.tsx:
+  41  							].map((item) => (
+  42: 								<div key={item} className="rounded-xl bg-teal-50 p-4 text-sm font-semibold text-teal-800">
+  43  									{item}
