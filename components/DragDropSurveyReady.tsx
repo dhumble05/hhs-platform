@@ -11,11 +11,11 @@ export default function DragDropSurveyReady() {
             Drag. Drop. Survey Ready.
           </h2>
 
-          <p className="mt-6 text-xl leading-8 text-slate-300">
-            Upload policies, inspection reports, fire drills, medical gas
-            documentation, meeting minutes, competencies, and photos directly
-            into the standards they support.
-          </p>
+<p className="mt-6 text-xl leading-8 text-slate-300">
+  <span className="font-semibold text-white">Upload once.</span> HHS
+  automatically organizes your evidence, maps it to every applicable
+  standard, and updates your survey readiness in real time.
+</p>
 
           <button className="mt-8 rounded-xl bg-teal-600 px-7 py-4 font-semibold text-white">
             Add Evidence
@@ -25,12 +25,14 @@ export default function DragDropSurveyReady() {
         <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
           <div className="rounded-2xl border-2 border-dashed border-slate-500 bg-slate-900 p-10 text-center">
             <div className="text-5xl">⬆️</div>
-            <h3 className="mt-5 text-2xl font-bold">
-              Drop evidence files here
-            </h3>
-            <p className="mt-3 text-slate-400">
-              PDF, Word, Excel, images, inspections, logs, policies, and reports.
-            </p>
+           <h3 className="mt-5 text-2xl font-bold">
+  Drop evidence here
+</h3>
+
+<p className="mt-3 text-slate-400">
+  HHS automatically categorizes every file, links it to the correct
+  standards, and tracks compliance across your organization.
+</p>
           </div>
 
           <div className="mt-6 space-y-3">
