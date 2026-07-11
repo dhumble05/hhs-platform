@@ -1,8 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navigation = [
-	{ icon: "▦", label: "Dashboard", href: "/demo", active: true },
+	{ icon: "▦", label: "Dashboard", href: "/demo" },
 	{ icon: "↥", label: "Evidence", href: "/demo/evidence" },
 	{ icon: "≡", label: "Standards", href: "/demo/standards" },
 	{ icon: "✓", label: "Survey Readiness", href: "/demo/readiness" },
@@ -12,9 +15,15 @@ const navigation = [
 ];
 
 export default function Sidebar() {
+	const pathname = usePathname();
+
 	return (
 		<aside className="hidden min-h-screen w-72 flex-col bg-slate-950 px-5 py-6 text-white lg:flex">
-			<div className="flex items-center gap-3 border-b border-white/10 pb-6">
+			<Link
+				href="/"
+				className="flex items-center gap-3 border-b border-white/10 pb-6 transition-opacity hover:opacity-80"
+				aria-label="Return to Humble Health Solutions homepage"
+			>
 				<div className="grid h-12 w-12 place-items-center rounded-xl bg-white">
 					<Image
 						src="/logo.png"
@@ -32,23 +41,31 @@ export default function Sidebar() {
 						Enterprise Compliance
 					</p>
 				</div>
-			</div>
+			</Link>
 
 			<nav className="mt-7 space-y-2">
-				{navigation.map((item) => (
-					<Link
-						key={item.label}
-						href={item.href}
-						className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
-							item.active
-								? "bg-teal-600 text-white"
-								: "text-slate-300 hover:bg-white/10 hover:text-white"
-						}`}
-					>
-						<span className="text-lg">{item.icon}</span>
-						{item.label}
-					</Link>
-				))}
+				{navigation.map((item) => {
+					const isActive =
+						item.href === "/demo"
+							? pathname === "/demo" || pathname === "/demo/"
+							: pathname.startsWith(item.href);
+
+					return (
+						<Link
+							key={item.label}
+							href={item.href}
+							aria-current={isActive ? "page" : undefined}
+							className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+								isActive
+									? "bg-teal-600 text-white"
+									: "text-slate-300 hover:bg-white/10 hover:text-white"
+							}`}
+						>
+							<span className="text-lg">{item.icon}</span>
+							{item.label}
+						</Link>
+					);
+				})}
 			</nav>
 
 			<div className="mt-auto">
