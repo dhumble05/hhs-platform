@@ -44,9 +44,12 @@ export default function Header() {
             Login
           </button>
 
-          <button className="rounded-xl bg-teal-700 px-6 py-3 font-semibold text-white hover:bg-teal-800">
-            Request Demo
-          </button>
+<a
+  href="/demo"
+  className="rounded-xl bg-teal-700 px-5 py-3 font-semibold text-white hover:bg-teal-800"
+>
+  Request Demo
+</a>
 
         </div>
 
