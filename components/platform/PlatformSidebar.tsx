@@ -3,60 +3,72 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { PlatformOrganization } from "./PlatformShell";
 
 const navigation = [
   {
+    label: "Command Center",
+    href: "/platform",
     icon: "▦",
-    label: "Dashboard",
-    href: "/demo",
   },
   {
-    icon: "↥",
     label: "Evidence",
-    href: "/demo/evidence",
+    href: "/platform/evidence",
+    icon: "↥",
   },
   {
-    icon: "≡",
     label: "Standards",
-    href: "/demo/standards",
+    href: "/platform/standards",
+    icon: "≡",
   },
   {
-    icon: "✓",
     label: "Survey Readiness",
-    href: "/demo/readiness",
+    href: "/platform/readiness",
+    icon: "✓",
   },
   {
-    icon: "▤",
     label: "Policies",
-    href: "/demo/policies",
+    href: "/platform/policies",
+    icon: "▤",
   },
   {
-    icon: "◷",
     label: "Tasks",
-    href: "/demo/tasks",
+    href: "/platform/tasks",
+    icon: "◷",
   },
   {
-    icon: "▥",
     label: "Reports",
-    href: "/demo/reports",
+    href: "/platform/reports",
+    icon: "▥",
+  },
+  {
+    label: "Facilities",
+    href: "/platform/facilities",
+    icon: "⌂",
   },
 ];
 
-export default function Sidebar() {
+type PlatformSidebarProps = {
+  organization: PlatformOrganization | null;
+};
+
+export default function PlatformSidebar({
+  organization,
+}: PlatformSidebarProps) {
   const pathname = usePathname();
 
   function isActive(href: string) {
-    if (href === "/demo") {
-      return pathname === "/demo";
+    if (href === "/platform") {
+      return pathname === "/platform";
     }
 
-    return pathname?.startsWith(href);
+    return pathname.startsWith(href);
   }
 
   return (
     <aside className="hidden min-h-screen w-72 flex-col bg-slate-950 px-5 py-6 text-white lg:flex">
       <Link
-        href="/"
+        href="/platform"
         className="flex items-center gap-3 border-b border-white/10 pb-6"
       >
         <div className="grid h-12 w-12 place-items-center rounded-xl bg-white">
@@ -72,8 +84,9 @@ export default function Sidebar() {
 
         <div>
           <p className="text-lg font-bold">HHS Platform</p>
-
-          <p className="text-xs text-slate-400">Enterprise Compliance</p>
+          <p className="text-xs text-slate-400">
+            Enterprise Compliance
+          </p>
         </div>
       </Link>
 
@@ -101,19 +114,41 @@ export default function Sidebar() {
       <div className="mt-auto">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <p className="text-xs font-semibold uppercase tracking-widest text-teal-300">
-            Demo Organization
+            Current Organization
           </p>
 
-          <p className="mt-2 font-semibold">Meridian Health Network</p>
+          <p className="mt-2 font-semibold">
+            {organization?.name ?? "Organization not configured"}
+          </p>
 
-          <p className="mt-1 text-xs text-slate-400">12 facilities · Enterprise Plan</p>
+          {organization ? (
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
+              <span>
+                {organization.facilityCount}{" "}
+                {organization.facilityCount === 1
+                  ? "facility"
+                  : "facilities"}
+              </span>
+
+              <span>•</span>
+
+              <span>
+                {organization.userCount}{" "}
+                {organization.userCount === 1 ? "user" : "users"}
+              </span>
+            </div>
+          ) : (
+            <p className="mt-1 text-xs text-slate-400">
+              Production environment
+            </p>
+          )}
         </div>
 
         <Link
-          href="/"
+          href="/platform/settings"
           className="mt-4 flex items-center justify-center rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
         >
-          Return to Website
+          Platform Settings
         </Link>
       </div>
     </aside>

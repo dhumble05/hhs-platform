@@ -1,35 +1,26 @@
+
+import DemoShell from "@/components/dashboard/DemoShell";
 import KPICards from "@/components/dashboard/KPICards";
-import Sidebar from "@/components/dashboard/Sidebar";
-import TopBar from "@/components/dashboard/TopBar";
 
 export default function DemoPage() {
-  return (
-    <main className="min-h-screen bg-slate-100 text-slate-950">
-      <div className="flex min-h-screen">
-        <Sidebar />
+	return (
+		<DemoShell>
+			<p className="text-sm font-bold uppercase tracking-[0.18em] text-teal-700">
+				Live Compliance Overview
+			</p>
 
-        <section className="min-w-0 flex-1">
-          <TopBar />
+			<h1 className="mt-2 text-3xl font-bold tracking-tight lg:text-4xl">
+				Organization survey readiness
+			</h1>
 
-          <div className="p-6 lg:p-9">
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-teal-700">
-              Live Compliance Overview
-            </p>
+			<p className="mt-2 max-w-2xl text-slate-500">
+				Monitor readiness, findings, evidence, policies, and
+				facility-level performance from one executive view.
+			</p>
 
-            <h2 className="mt-2 text-3xl font-bold">
-              Organization Survey Readiness
-            </h2>
-
-            <p className="mt-2 text-slate-500">
-              Monitor readiness, findings, evidence, policies, and facility performance from one executive view.
-            </p>
-
-            <div className="mt-8">
-              <KPICards />
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
+			<div className="mt-8">
+				<KPICards />
+			</div>
+		</DemoShell>
+	);
 }
