@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { saveOrganization } from "./actions";
 const accreditationOptions = [
   "CMS",
   "AAAHC",
@@ -79,33 +79,64 @@ export default function OrganizationPage() {
     updateField("accreditations", updatedAccreditations);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
 
-    if (!form.organizationName.trim()) {
-      setError("Enter an organization name before continuing.");
+  if (!form.organizationName.trim()) {
+    setError("Enter an organization name before continuing.");
+    return;
+  }
+
+  if (!form.organizationType) {
+    setError("Select an organization type before continuing.");
+    return;
+  }
+
+  if (!form.primaryContact.trim()) {
+    setError("Enter the primary contact for this organization.");
+    return;
+  }
+
+  if (!form.email.trim()) {
+    setError("Enter a primary contact email address.");
+    return;
+  }
+
+  setError("");
+  setIsSaving(true);
+
+  try {
+    const result = await saveOrganization({
+      name: form.organizationName,
+      legalName: form.legalName,
+      dba: form.dba,
+      organizationType: form.organizationType,
+      primaryContact: form.primaryContact,
+      email: form.email,
+      phone: form.phone,
+      website: form.website,
+      addressLine1: form.addressLine1,
+      addressLine2: form.addressLine2,
+      city: form.city,
+      state: form.state,
+      postalCode: form.postalCode,
+      accreditations: form.accreditations,
+    });
+
+    if (!result.success) {
+      setError(result.error ?? "The organization could not be saved.");
+      setIsSaving(false);
       return;
     }
-
-    if (!form.organizationType) {
-      setError("Select an organization type before continuing.");
-      return;
-    }
-
-    if (!form.primaryContact.trim()) {
-      setError("Enter the primary contact for this organization.");
-      return;
-    }
-
-    if (!form.email.trim()) {
-      setError("Enter a primary contact email address.");
-      return;
-    }
-
-    setIsSaving(true);
 
     router.push("/platform/facilities");
+    router.refresh();
+  } catch (error) {
+    console.error("Organization save failed:", error);
+    setError("The organization could not be saved. Please try again.");
+    setIsSaving(false);
   }
+}
 
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-8 lg:px-10 lg:py-10">

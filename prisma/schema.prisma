@@ -33,6 +33,8 @@ model Organization {
 
   facilities Facility[]
   users      User[]
+  evidence   Evidence[]
+  standards  Standard[]
 }
 
 model Facility {
@@ -40,8 +42,18 @@ model Facility {
   name         String
   facilityType String
 
+  primaryAccreditor      String?
+  cmsCertificationNumber String?
+  facilityAdministrator  String?
+  medicalDirector        String?
+  safetyOfficer          String?
+  timeZone               String?
+  facilityAddress        String?
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  evidence Evidence[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -55,6 +67,10 @@ model User {
   firstName String?
   lastName  String?
 
+  role             String @default("Staff")
+  accessScope      String @default("All Facilities")
+  invitationStatus String @default("Active")
+
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
@@ -65,10 +81,99 @@ model User {
 }
 
 model Evidence {
-  id       String @id @default(cuid())
-  title    String
-  fileName String
-  status   String
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  fileName    String
+  fileUrl     String?
+  fileType    String?
+  fileSize    Int?
+  extractedText  String? @db.Text
+  analysisStatus String  @default("Pending")
+  analysisError  String? @db.Text
+    analysisDocumentType         String?
+  analysisDepartment           String?
+  analysisConfidence           Float?
+  analysisRecommendedStandards String[]
+  analysisMissingEvidence      String[]
+  analysisSummary              String? @db.Text
+  category       String?
+  status         String    @default("Draft")
+  ownerName      String?
+  expirationDate DateTime?
+  uploadedAt     DateTime  @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  facilityId String?
+  facility   Facility? @relation(fields: [facilityId], references: [id], onDelete: SetNull)
+
+  standardMappings EvidenceStandard[]
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([facilityId])
+  @@index([status])
+}
+
+model Standard {
+  id String @id @default(cuid())
+
+  accreditor  String
+  code        String
+  title       String
+  chapter     String?
+  description String?
+  requirement String?
+
+  version       String?
+  effectiveDate DateTime?
+  category      String?
+  riskLevel     String?
+  status        String    @default("Active")
+
+  sourceUrl String?
+  isCustom  Boolean @default(false)
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  evidenceMappings EvidenceStandard[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([accreditor])
+  @@index([code])
+  @@index([category])
+  @@index([status])
+}
+
+model EvidenceStandard {
+  id String @id @default(cuid())
+
+  evidenceId String
+  evidence   Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+
+  standardId String
+  standard   Standard @relation(fields: [standardId], references: [id], onDelete: Cascade)
+
+  mappingSource String    @default("Manual")
+  confidence    Float?
+  notes         String?
+  isVerified    Boolean   @default(false)
+  verifiedBy    String?
+  verifiedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([evidenceId, standardId])
+  @@index([evidenceId])
+  @@index([standardId])
+  @@index([isVerified])
 }

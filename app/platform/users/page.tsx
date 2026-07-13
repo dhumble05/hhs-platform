@@ -1,105 +1,83 @@
 "use client";
-
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
+import { createOwnerUser } from "./actions";
 
 export default function UsersPage() {
-  const router = useRouter();
+	const router = useRouter();
 
-  return (
-    <main className="mx-auto max-w-5xl p-8">
-      <div className="mb-8">
-        <p className="text-sm font-bold uppercase tracking-[0.18em] text-teal-700">
-          Step 3 of 4
-        </p>
+	const [isSaving, setIsSaving] = useState(false);
+	const [error, setError] = useState("");
 
-        <h1 className="mt-2 text-4xl font-bold">Invite Your Team</h1>
+	async function handleContinue() {
+		setError("");
+		setIsSaving(true);
 
-        <p className="mt-3 text-lg text-slate-500">
-          Add key users and assign the right level of access to your
-          organization and facilities.
-        </p>
-      </div>
+		const result = await createOwnerUser();
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="grid gap-6 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-semibold">
-              Full Name
-            </label>
+		if (!result.success) {
+			setError(result.error ?? "Unable to create user.");
+			setIsSaving(false);
+			return;
+		}
 
-            <input
-              type="text"
-              placeholder="Jessica Humble"
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-teal-600 focus:outline-none"
-            />
-          </div>
+		router.push("/platform/setup-complete");
+		router.refresh();
+	}
 
-          <div>
-            <label className="mb-2 block text-sm font-semibold">
-              Email Address
-            </label>
+	return (
+		<main className="mx-auto max-w-5xl p-8">
+			<div className="mb-8">
+				<p className="text-sm font-bold uppercase tracking-[0.18em] text-teal-700">
+					Step 3 of 4
+				</p>
 
-            <input
-              type="email"
-              placeholder="name@company.com"
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-teal-600 focus:outline-none"
-            />
-          </div>
+				<h1 className="mt-2 text-4xl font-bold">
+					Invite Your Team
+				</h1>
 
-          <div>
-            <label className="mb-2 block text-sm font-semibold">
-              Role
-            </label>
+				<p className="mt-3 text-lg text-slate-500">
+					Your account will automatically become the Organization Owner.
+					Additional users can be invited later.
+				</p>
+			</div>
 
-            <select className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-teal-600 focus:outline-none">
-              <option>Organization Administrator</option>
-              <option>Facility Administrator</option>
-              <option>Compliance Director</option>
-              <option>Clinical Director</option>
-              <option>Facilities Director</option>
-              <option>Safety Officer</option>
-              <option>Read Only</option>
-            </select>
-          </div>
+			<div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
 
-          <div>
-            <label className="mb-2 block text-sm font-semibold">
-              Facility Access
-            </label>
+				<div className="rounded-xl bg-slate-50 p-6">
+					<h2 className="text-xl font-bold">
+						Organization Owner
+					</h2>
 
-            <select className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-teal-600 focus:outline-none">
-              <option>All Facilities</option>
-              <option>Selected Facilities Only</option>
-            </select>
-          </div>
-        </div>
+					<p className="mt-2 text-slate-600">
+						Your current Clerk account will become the owner of this
+						organization with full access to all facilities and modules.
+					</p>
+				</div>
 
-        <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5">
-          <p className="font-semibold">Team invitations</p>
+				{error && (
+					<div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+						{error}
+					</div>
+				)}
 
-          <p className="mt-1 text-sm text-slate-500">
-            Additional users can be invited later from Platform Settings.
-          </p>
-        </div>
+				<div className="mt-10 flex justify-end gap-4">
+					<Button
+						variant="secondary"
+						onClick={() => router.push("/platform/facilities")}
+					>
+						Back
+					</Button>
 
-        <div className="mt-10 flex justify-end gap-4">
-          <button
-            type="button"
-            onClick={() => router.push("/platform/facilities")}
-            className="rounded-xl border border-slate-300 px-6 py-3 font-semibold"
-          >
-            Back
-          </button>
-
-          <button
-            type="button"
-            onClick={() => router.push("/platform/setup-complete")}
-            className="rounded-xl bg-teal-600 px-8 py-3 font-semibold text-white hover:bg-teal-700"
-          >
-            Continue →
-          </button>
-        </div>
-      </div>
-    </main>
-  );
+					<Button
+						onClick={handleContinue}
+						disabled={isSaving}
+					>
+						{isSaving ? "Creating User..." : "Continue →"}
+					</Button>
+				</div>
+			</div>
+		</main>
+	);
 }
