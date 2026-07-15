@@ -55,9 +55,9 @@ export default function SurveyHero() {
               See survey readiness in 60 seconds
             </div>
 
-            <h1 className="max-w-3xl text-4xl font-semibold leading-[1.02] tracking-[-0.05em] sm:text-5xl md:text-6xl lg:text-7xl">
+            <h1 className="max-w-3xl text-4xl font-semibold leading-[1.08] tracking-[-0.05em] sm:text-5xl md:text-6xl lg:text-7xl">
               Drag. Drop.
-<span className="block pb-2 bg-gradient-to-r from-teal-300 via-cyan-300 to-blue-300 bg-clip-text text-transparent">
+<span className="block overflow-visible pb-[0.22em] leading-[1.12] bg-gradient-to-r from-teal-300 via-cyan-300 to-blue-300 bg-clip-text text-transparent">
   Survey Ready.
 </span>
             </h1>
