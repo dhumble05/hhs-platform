@@ -73,7 +73,7 @@ export default function PlatformSidebar({
       >
         <div className="grid h-12 w-12 place-items-center rounded-xl bg-white">
           <Image
-            src="/logo.png"
+            src="/hhs-logo.png"
             alt="Humble Health Solutions"
             width={42}
             height={42}

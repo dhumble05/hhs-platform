@@ -8,7 +8,7 @@ export default function Header() {
         <div className="flex items-center gap-4">
 
           <Image
-            src="/logo.png"
+            src="/hhs-logo.png"
             alt="Humble Health Solutions"
             width={64}
             height={64}
