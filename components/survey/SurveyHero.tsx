@@ -57,9 +57,9 @@ export default function SurveyHero() {
 
             <h1 className="max-w-3xl text-4xl font-semibold leading-[1.02] tracking-[-0.05em] sm:text-5xl md:text-6xl lg:text-7xl">
               Drag. Drop.
-              <span className="block bg-gradient-to-r from-teal-300 via-cyan-300 to-blue-300 bg-clip-text text-transparent">
-                Survey Ready.
-              </span>
+<span className="block pb-2 bg-gradient-to-r from-teal-300 via-cyan-300 to-blue-300 bg-clip-text text-transparent">
+  Survey Ready.
+</span>
             </h1>
 
             <p className="mt-8 max-w-xl text-xl font-medium leading-8 text-slate-200">
