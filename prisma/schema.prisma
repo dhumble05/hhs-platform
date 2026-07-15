@@ -94,6 +94,12 @@ model Evidence {
     analysisDocumentType         String?
   analysisDepartment           String?
   analysisConfidence           Float?
+  analysisEvidenceQuality Float?
+  analysisSurveyReadiness Float?
+  analysisRiskLevel String?
+  analysisStrengths String[]
+  analysisRecommendations String[]
+  analysisExecutiveSummary String? @db.Text
   analysisRecommendedStandards String[]
   analysisMissingEvidence      String[]
   analysisSummary              String? @db.Text

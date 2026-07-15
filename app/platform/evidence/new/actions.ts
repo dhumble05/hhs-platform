@@ -35,6 +35,7 @@ function optionalValue(value: FormDataEntryValue | null) {
   }
 
   const cleanedValue = value.trim();
+
   return cleanedValue || null;
 }
 
@@ -90,8 +91,11 @@ export async function saveEvidence(
     }
 
     const titleValue = formData.get("title");
+
     const title =
-      typeof titleValue === "string" ? titleValue.trim() : "";
+      typeof titleValue === "string"
+        ? titleValue.trim()
+        : "";
 
     const fileValue = formData.get("file");
 
@@ -127,6 +131,7 @@ export async function saveEvidence(
     }
 
     const facilityIdValue = formData.get("facilityId");
+
     const facilityId =
       typeof facilityIdValue === "string" &&
       facilityIdValue.trim()
@@ -158,11 +163,24 @@ export async function saveEvidence(
       `${randomUUID()}-${safeFileName(fileValue.name)}`,
     ].join("/");
 
-    const fileBuffer = Buffer.from(await fileValue.arrayBuffer());
+    const fileBuffer = Buffer.from(
+      await fileValue.arrayBuffer(),
+    );
 
     let extractedText: string | null = null;
     let analysisStatus = "Pending";
     let analysisError: string | null = null;
+
+    let analysisDocumentType: string | null = null;
+    let analysisDepartment: string | null = null;
+    let analysisConfidence: number | null = null;
+    let analysisRecommendedStandards: string[] = [];
+    let analysisMissingEvidence: string[] = [];
+    let analysisSummary: string | null = null;
+
+    let matchedStandards: Array<{
+      id: string;
+    }> = [];
 
     if (fileValue.type === "application/pdf") {
       analysisStatus = "Extracting";
@@ -172,6 +190,7 @@ export async function saveEvidence(
         analysisStatus = "Ready";
       } catch (error) {
         analysisStatus = "Extraction Failed";
+
         analysisError =
           error instanceof Error
             ? error.message
@@ -179,18 +198,37 @@ export async function saveEvidence(
       }
     }
 
-    let analysisDocumentType: string | null = null;
-    let analysisDepartment: string | null = null;
-    let analysisConfidence: number | null = null;
-    let analysisRecommendedStandards: string[] = [];
-    let analysisMissingEvidence: string[] = [];
-    let analysisSummary: string | null = null;
-
     if (extractedText) {
       analysisStatus = "Analyzing";
 
       try {
-        const analysis = await analyzeEvidence(extractedText);
+        const availableStandards =
+          await prisma.standard.findMany({
+            where: {
+              OR: [
+                {
+                  organizationId: null,
+                },
+                {
+                  organizationId,
+                },
+              ],
+              status: "Active",
+            },
+            select: {
+              code: true,
+              accreditor: true,
+              title: true,
+              chapter: true,
+              description: true,
+              requirement: true,
+            },
+          });
+
+        const analysis = await analyzeEvidence(
+          extractedText,
+          availableStandards,
+        );
 
         analysisDocumentType = analysis.documentType;
         analysisDepartment = analysis.department;
@@ -199,11 +237,38 @@ export async function saveEvidence(
           analysis.recommendedStandards;
         analysisMissingEvidence =
           analysis.missingEvidence;
-        analysisSummary = analysis.summary;
+        analysisSummary = analysis.executiveSummary;
+
+        matchedStandards =
+          await prisma.standard.findMany({
+            where: {
+              AND: [
+                {
+                  OR: [
+                    {
+                      organizationId: null,
+                    },
+                    {
+                      organizationId,
+                    },
+                  ],
+                },
+                {
+                  code: {
+                    in: analysis.recommendedStandards,
+                  },
+                },
+              ],
+            },
+            select: {
+              id: true,
+            },
+          });
 
         analysisStatus = "Complete";
       } catch (error) {
         analysisStatus = "Analysis Failed";
+
         analysisError =
           error instanceof Error
             ? error.message
@@ -211,16 +276,21 @@ export async function saveEvidence(
       }
     }
 
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from("evidence")
-      .upload(storagePath, fileBuffer, {
-        contentType:
-          fileValue.type || "application/octet-stream",
-        upsert: false,
-      });
+    const { error: uploadError } =
+      await supabaseAdmin.storage
+        .from("evidence")
+        .upload(storagePath, fileBuffer, {
+          contentType:
+            fileValue.type ||
+            "application/octet-stream",
+          upsert: false,
+        });
 
     if (uploadError) {
-      console.error("SUPABASE UPLOAD ERROR", uploadError);
+      console.error(
+        "SUPABASE UPLOAD ERROR",
+        uploadError,
+      );
 
       return {
         success: false,
@@ -230,14 +300,19 @@ export async function saveEvidence(
 
     uploadedStoragePath = storagePath;
 
-    const expirationDateValue = formData.get("expirationDate");
+    const expirationDateValue =
+      formData.get("expirationDate");
+
     const expirationDate =
       typeof expirationDateValue === "string" &&
       expirationDateValue
-        ? new Date(`${expirationDateValue}T12:00:00`)
+        ? new Date(
+            `${expirationDateValue}T12:00:00`,
+          )
         : null;
 
     const statusValue = formData.get("status");
+
     const status =
       typeof statusValue === "string" && statusValue
         ? statusValue
@@ -246,11 +321,14 @@ export async function saveEvidence(
     const evidence = await prisma.evidence.create({
       data: {
         title,
-        description: optionalValue(formData.get("description")),
+        description: optionalValue(
+          formData.get("description"),
+        ),
         fileName: fileValue.name,
         fileUrl: storagePath,
         fileType:
-          fileValue.type || "application/octet-stream",
+          fileValue.type ||
+          "application/octet-stream",
         fileSize: fileValue.size,
 
         extractedText,
@@ -263,9 +341,13 @@ export async function saveEvidence(
         analysisMissingEvidence,
         analysisSummary,
 
-        category: optionalValue(formData.get("category")),
+        category: optionalValue(
+          formData.get("category"),
+        ),
         status,
-        ownerName: optionalValue(formData.get("ownerName")),
+        ownerName: optionalValue(
+          formData.get("ownerName"),
+        ),
         expirationDate,
 
         organization: {
@@ -281,11 +363,30 @@ export async function saveEvidence(
               },
             }
           : undefined,
+
+        standardMappings:
+          matchedStandards.length > 0
+            ? {
+                create: matchedStandards.map(
+                  (standard) => ({
+                    standardId: standard.id,
+                    mappingSource: "AI",
+                    confidence:
+                      analysisConfidence,
+                    isVerified: false,
+                  }),
+                ),
+              }
+            : undefined,
       },
     });
 
     revalidatePath("/platform");
     revalidatePath("/platform/evidence");
+    revalidatePath(
+      `/platform/evidence/${evidence.id}`,
+    );
+    revalidatePath("/platform/standards");
 
     return {
       success: true,
