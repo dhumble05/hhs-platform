@@ -1,37 +1,43 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "hhs-platform",
   "main": ".open-next/worker.js",
-  "name": "hhs-platform-clean",
-  "compatibility_date": "2026-07-15",
+  "compatibility_date": "2026-09-12",
   "compatibility_flags": [
-    "nodejs_compat",
-    "global_fetch_strictly_public"
+    "nodejs_compat"
   ],
-  "routes": [
-    {
-      "pattern": "humblehealthsolutions.com",
-      "custom_domain": true
-    },
-    {
-      "pattern": "www.humblehealthsolutions.com",
-      "custom_domain": true
-    }
-  ],
+
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+
   "services": [
     {
-      // Self-reference service binding, the service name must match the worker name
-      // see https://opennext.js.org/cloudflare/caching
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "hhs-platform-clean"
+      "service": "hhs-platform"
     }
   ],
+
   "images": {
-    // Enable image optimization
-    // see https://opennext.js.org/cloudflare/howtos/image
     "binding": "IMAGES"
+  },
+
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    }
+  },
+
+  "secrets": {
+    "required": [
+      "CLERK_SECRET_KEY",
+      "DATABASE_URL",
+      "DIRECT_URL",
+      "SUPABASE_SECRET_KEY",
+      "OPENAI_API_KEY"
+    ]
   }
 }
