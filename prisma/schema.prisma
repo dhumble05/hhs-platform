@@ -28,13 +28,13 @@ model Organization {
   accreditations   String[]
   ownerClerkUserId String   @unique
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  facilities Facility[]
-  users      User[]
-  evidence   Evidence[]
-  standards  Standard[]
+  facilities        Facility[]
+  users             User[]
+  evidence          Evidence[]
+  standards         Standard[]
+  operationalTopics OperationalTopic[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 }
 
 model Facility {
@@ -53,12 +53,31 @@ model Facility {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  evidence Evidence[]
+  evidence     Evidence[]
+  capabilities FacilityCapability[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
+}
+
+model FacilityCapability {
+  id String @id @default(cuid())
+
+  capability String
+  enabled    Boolean @default(true)
+
+  facilityId String
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([facilityId, capability])
+  @@index([facilityId])
+  @@index([capability])
+  @@index([enabled])
 }
 
 model User {
@@ -84,30 +103,51 @@ model Evidence {
   id          String  @id @default(cuid())
   title       String
   description String?
-  fileName    String
-  fileUrl     String?
-  fileType    String?
-  fileSize    Int?
-  extractedText  String? @db.Text
-  analysisStatus String  @default("Pending")
-  analysisError  String? @db.Text
-    analysisDocumentType         String?
-  analysisDepartment           String?
-  analysisConfidence           Float?
-  analysisEvidenceQuality Float?
-  analysisSurveyReadiness Float?
-  analysisRiskLevel String?
-  analysisStrengths String[]
-  analysisRecommendations String[]
-  analysisExecutiveSummary String? @db.Text
-  analysisRecommendedStandards String[]
-  analysisMissingEvidence      String[]
-  analysisSummary              String? @db.Text
+
+  fileName      String
+  fileUrl       String?
+  fileType      String?
+  fileSize      Int?
+  extractedText String? @db.Text
+
   category       String?
   status         String    @default("Draft")
   ownerName      String?
   expirationDate DateTime?
   uploadedAt     DateTime  @default(now())
+  documentDate   DateTime?
+
+  complianceYear    Int?
+  complianceMonth   Int?
+  complianceQuarter Int?
+
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  frequency    String?
+  evidenceType String?
+
+  serviceProvider String?
+  performedBy     String?
+
+  isRecurring    Boolean @default(false)
+  analysisStatus String  @default("Pending")
+  analysisError  String? @db.Text
+
+  analysisDocumentType    String?
+  analysisDepartment      String?
+  analysisConfidence      Float?
+  analysisEvidenceQuality Float?
+  analysisSurveyReadiness Float?
+  analysisRiskLevel       String?
+
+  analysisStrengths               String[] @default([])
+  analysisRecommendations         String[] @default([])
+  analysisRecommendedStandards    String[] @default([])
+  analysisMissingEvidence         String[] @default([])
+  analysisStandardRecommendations Json     @default("[]")
+  analysisExecutiveSummary        String?  @db.Text
+  analysisSummary                 String?  @db.Text
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -115,7 +155,8 @@ model Evidence {
   facilityId String?
   facility   Facility? @relation(fields: [facilityId], references: [id], onDelete: SetNull)
 
-  standardMappings EvidenceStandard[]
+  standardMappings         EvidenceStandard[]
+  operationalTopicMappings EvidenceOperationalTopic[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -123,40 +164,190 @@ model Evidence {
   @@index([organizationId])
   @@index([facilityId])
   @@index([status])
+  @@index([analysisStatus])
+  @@index([complianceYear])
+  @@index([complianceYear, complianceMonth])
+  @@index([facilityId, complianceYear, complianceMonth])
+  @@index([evidenceType])
+  @@index([frequency])
 }
 
 model Standard {
   id String @id @default(cuid())
 
-  accreditor  String
-  code        String
-  title       String
-  chapter     String?
-  description String?
-  requirement String?
+  accreditor String
+  chapter    String?
+  code       String
+  slug       String?
+  title      String
+
+  intent      String? @db.Text
+  description String? @db.Text
+  requirement String? @db.Text
+
+  surveyorLooksFor String[] @default([])
+  evidenceExamples String[] @default([])
+  commonFindings   String[] @default([])
+  keywords         String[] @default([])
+  aiGuidance       String?  @db.Text
+
+  referencedAuthorities Json?
+
+  evidenceFrequency String?
+  evidenceRetention String?
+  responsibleRole   String?
+  validationMethod  String?
+
+  department String?
+  domain     String?
+  category   String?
+  riskLevel  String?
+  priority   Int     @default(1)
 
   version       String?
   effectiveDate DateTime?
-  category      String?
-  riskLevel     String?
   status        String    @default("Active")
-
-  sourceUrl String?
-  isCustom  Boolean @default(false)
+  sourceUrl     String?
+  isCustom      Boolean   @default(false)
 
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  evidenceMappings EvidenceStandard[]
+  evidenceMappings         EvidenceStandard[]
+  operationalTopicMappings StandardOperationalTopic[]
+  applicabilityRules       StandardApplicabilityRule[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([accreditor])
+  @@index([chapter])
   @@index([code])
+  @@index([domain])
   @@index([category])
   @@index([status])
+  @@index([slug])
+}
+
+model StandardApplicabilityRule {
+  id String @id @default(cuid())
+
+  ruleType  String
+  ruleValue String
+  effect    String  @default("Include")
+  ruleGroup String  @default("default")
+  matchMode String  @default("All")
+  notes     String? @db.Text
+
+  standardId String
+  standard   Standard @relation(fields: [standardId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([standardId])
+  @@index([ruleType])
+  @@index([effect])
+  @@index([ruleGroup])
+}
+
+model OperationalTopic {
+  id String @id @default(cuid())
+
+  code String
+  slug String
+  name String
+
+  description String? @db.Text
+  aiGuidance  String? @db.Text
+
+  domain   String?
+  category String?
+
+  displayOrder Int     @default(100)
+  icon         String?
+  color        String?
+
+  riskLevel String?
+  priority  Int     @default(1)
+
+  keywords         String[] @default([])
+  evidenceExamples String[] @default([])
+  surveyorLooksFor String[] @default([])
+  commonFindings   String[] @default([])
+
+  evidenceFrequency String?
+  evidenceRetention String?
+  responsibleRole   String?
+  validationMethod  String?
+
+  status   String  @default("Active")
+  isCustom Boolean @default(false)
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  standardMappings StandardOperationalTopic[]
+  evidenceMappings EvidenceOperationalTopic[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([code, organizationId])
+  @@unique([slug, organizationId])
+  @@index([organizationId])
+  @@index([domain])
+  @@index([category])
+  @@index([status])
+  @@index([displayOrder])
+  @@index([domain, displayOrder])
+}
+
+model StandardOperationalTopic {
+  id String @id @default(cuid())
+
+  standardId String
+  standard   Standard @relation(fields: [standardId], references: [id], onDelete: Cascade)
+
+  operationalTopicId String
+  operationalTopic   OperationalTopic @relation(fields: [operationalTopicId], references: [id], onDelete: Cascade)
+
+  relationshipType String  @default("Applies To")
+  notes            String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([standardId, operationalTopicId])
+  @@index([standardId])
+  @@index([operationalTopicId])
+}
+
+model EvidenceOperationalTopic {
+  id String @id @default(cuid())
+
+  evidenceId String
+  evidence   Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+
+  operationalTopicId String
+  operationalTopic   OperationalTopic @relation(fields: [operationalTopicId], references: [id], onDelete: Cascade)
+
+  mappingSource String  @default("Manual")
+  confidence    Float?
+  notes         String? @db.Text
+
+  isVerified Boolean   @default(false)
+  verifiedBy String?
+  verifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([evidenceId, operationalTopicId])
+  @@index([evidenceId])
+  @@index([operationalTopicId])
+  @@index([isVerified])
 }
 
 model EvidenceStandard {
@@ -168,12 +359,18 @@ model EvidenceStandard {
   standardId String
   standard   Standard @relation(fields: [standardId], references: [id], onDelete: Cascade)
 
-  mappingSource String    @default("Manual")
+  mappingSource String  @default("Manual")
   confidence    Float?
-  notes         String?
-  isVerified    Boolean   @default(false)
-  verifiedBy    String?
-  verifiedAt    DateTime?
+  notes         String? @db.Text
+
+  evidenceStrength    String?
+  mappedRequirements  String[] @default([])
+  missingRequirements String[] @default([])
+  surveyImpact        String?  @db.Text
+
+  isVerified Boolean   @default(false)
+  verifiedBy String?
+  verifiedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -182,4 +379,5 @@ model EvidenceStandard {
   @@index([evidenceId])
   @@index([standardId])
   @@index([isVerified])
+  @@index([evidenceStrength])
 }

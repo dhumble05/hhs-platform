@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 
 import { analyzeEvidence } from "@/lib/ai/analyzeEvidence";
 import { extractPdfText } from "@/lib/documents/extractPdf";
+import { extractDocxText } from "@/lib/documents/extractDocx";
 import { prisma } from "@/lib/prisma";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -173,6 +174,25 @@ export async function saveEvidence(
 
     let analysisDocumentType: string | null = null;
     let analysisDepartment: string | null = null;
+    let operationalProgram: string | null = null;
+let programComponent: string | null = null;
+
+let documentDate: Date | null = null;
+
+let complianceYear: number | null = null;
+let complianceMonth: number | null = null;
+let complianceQuarter: number | null = null;
+
+let periodStart: Date | null = null;
+let periodEnd: Date | null = null;
+
+let frequency: string | null = null;
+let evidenceType: string | null = null;
+
+let serviceProvider: string | null = null;
+let performedBy: string | null = null;
+
+let isRecurring = false;
     let analysisConfidence: number | null = null;
     let analysisRecommendedStandards: string[] = [];
     let analysisMissingEvidence: string[] = [];
@@ -181,22 +201,33 @@ export async function saveEvidence(
     let matchedStandards: Array<{
       id: string;
     }> = [];
+let matchedOperationalTopic: {
+  id: string;
+} | null = null;
+if (
+  fileValue.type === "application/pdf" ||
+  fileValue.type ===
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+) {
+  analysisStatus = "Extracting";
 
+  try {
     if (fileValue.type === "application/pdf") {
-      analysisStatus = "Extracting";
-
-      try {
-        extractedText = await extractPdfText(fileBuffer);
-        analysisStatus = "Ready";
-      } catch (error) {
-        analysisStatus = "Extraction Failed";
-
-        analysisError =
-          error instanceof Error
-            ? error.message
-            : "The PDF text could not be extracted.";
-      }
+      extractedText = await extractPdfText(fileBuffer);
+    } else {
+      extractedText = await extractDocxText(fileBuffer);
     }
+
+    analysisStatus = "Ready";
+  } catch (error) {
+    analysisStatus = "Extraction Failed";
+
+    analysisError =
+      error instanceof Error
+        ? error.message
+        : "The document text could not be extracted.";
+  }
+}
 
     if (extractedText) {
       analysisStatus = "Analyzing";
@@ -224,14 +255,69 @@ export async function saveEvidence(
               requirement: true,
             },
           });
-
-        const analysis = await analyzeEvidence(
-          extractedText,
-          availableStandards,
-        );
+const availableOperationalTopics =
+  await prisma.operationalTopic.findMany({
+    where: {
+      OR: [
+        {
+          organizationId: null,
+        },
+        {
+          organizationId,
+        },
+      ],
+      status: "Active",
+    },
+    select: {
+      code: true,
+      name: true,
+      domain: true,
+      category: true,
+      description: true,
+      aiGuidance: true,
+      keywords: true,
+      evidenceExamples: true,
+    },
+  });
+const analysis = await analyzeEvidence(
+  extractedText,
+  availableStandards,
+  availableOperationalTopics,
+);
 
         analysisDocumentType = analysis.documentType;
         analysisDepartment = analysis.department;
+        operationalProgram =
+  analysis.operationalProgram === "Uncategorized"
+    ? null
+    : analysis.operationalProgram;
+
+programComponent =
+  analysis.programComponent === "Uncategorized"
+    ? null
+    : analysis.programComponent;
+
+documentDate = analysis.documentDate
+  ? new Date(`${analysis.documentDate}T12:00:00`)
+  : null;
+
+complianceYear = analysis.complianceYear;
+complianceMonth = analysis.complianceMonth;
+complianceQuarter = analysis.complianceQuarter;
+
+periodStart = analysis.periodStart
+  ? new Date(`${analysis.periodStart}T12:00:00`)
+  : null;
+
+periodEnd = analysis.periodEnd
+  ? new Date(`${analysis.periodEnd}T12:00:00`)
+  : null;
+
+frequency = analysis.frequency;
+evidenceType = analysis.evidenceType;
+serviceProvider = analysis.serviceProvider;
+performedBy = analysis.performedBy;
+isRecurring = analysis.isRecurring;
         analysisConfidence = analysis.confidence;
         analysisRecommendedStandards =
           analysis.recommendedStandards;
@@ -264,7 +350,26 @@ export async function saveEvidence(
               id: true,
             },
           });
-
+if (operationalProgram) {
+  matchedOperationalTopic =
+    await prisma.operationalTopic.findFirst({
+      where: {
+        name: operationalProgram,
+        status: "Active",
+        OR: [
+          {
+            organizationId: null,
+          },
+          {
+            organizationId,
+          },
+        ],
+      },
+      select: {
+        id: true,
+      },
+    });
+}
         analysisStatus = "Complete";
       } catch (error) {
         analysisStatus = "Analysis Failed";

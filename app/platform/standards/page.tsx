@@ -340,15 +340,20 @@ export default async function StandardsPage({
 							<tbody className="divide-y divide-slate-200">
 								{standards.map((standard) => (
 									<tr key={standard.id} className="hover:bg-slate-50">
-										<td className="px-6 py-5">
-											<p className="font-semibold text-slate-950">
-												{standard.code}
-											</p>
+<td className="px-6 py-5">
+  <Link
+    href={`/platform/standards/${standard.code}`}
+    className="group block"
+  >
+    <p className="font-semibold text-slate-950 transition group-hover:text-teal-700">
+      {standard.code}
+    </p>
 
-											<p className="mt-1 text-sm text-slate-600">
-												{standard.title}
-											</p>
-										</td>
+    <p className="mt-1 text-sm text-slate-600 transition group-hover:text-teal-700">
+      {standard.title}
+    </p>
+  </Link>
+</td>
 
 										<td className="px-6 py-5 text-slate-600">
 											{standard.accreditor}

@@ -40,9 +40,12 @@ export default function Header() {
 
         <div className="flex items-center gap-4">
 
-          <button className="font-semibold text-slate-700 hover:text-teal-700">
-            Login
-          </button>
+<a
+  href="/sign-in"
+  className="font-semibold text-slate-700 hover:text-teal-700"
+>
+  Login
+</a>
 
 <a
   href="/demo"
