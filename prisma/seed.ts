@@ -41,16 +41,12 @@ const prisma = new PrismaClient({
   adapter,
 });
 
+const WRITE_BATCH_SIZE = 20;
+
 const coreStandards: HhsCoreStandard[] = [
   ...jointCommissionPhysicalEnvironment,
-
-  // Keep these temporarily until the older Joint Commission
-  // Life Safety records are reviewed and migrated or retired.
   ...jointCommissionLifeSafety,
-
   ...cmsLifeSafetyStandards,
-
-  // HHS operational knowledge controls.
   ...hhsFireAlarmStandards,
   ...hhsFireDoorStandards,
   ...hhsSprinklerStandards,
@@ -106,200 +102,203 @@ function createSlug(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-async function upsertStandard(
-  standard: HhsCoreStandard,
-): Promise<void> {
-  const existingStandard =
-    await prisma.standard.findFirst({
-      where: {
-        code: standard.code,
-        accreditor: standard.accreditor,
-        organizationId: null,
-      },
-      select: {
-        id: true,
-      },
-    });
+function standardKey(accreditor: string, code: string): string {
+  return `${accreditor}::${code}`;
+}
 
-  const data = {
+async function runInBatches<T>(
+  items: T[],
+  batchSize: number,
+  worker: (item: T) => Promise<void>,
+): Promise<void> {
+  for (let index = 0; index < items.length; index += batchSize) {
+    const batch = items.slice(index, index + batchSize);
+
+    await Promise.all(batch.map((item) => worker(item)));
+
+    const completed = Math.min(index + batch.length, items.length);
+
+    console.log(`Processed ${completed}/${items.length}`);
+  }
+}
+
+function buildStandardData(standard: HhsCoreStandard) {
+  return {
     accreditor: standard.accreditor,
     chapter: standard.chapter ?? null,
     code: standard.code,
-    slug:
-      standard.slug ??
-      createSlug(standard.code),
+    slug: standard.slug ?? createSlug(standard.code),
     title: standard.title,
-
     intent: standard.intent ?? null,
-    description:
-      standard.description ?? null,
-    requirement:
-      standard.requirement ?? null,
-
-    surveyorLooksFor:
-      standard.surveyorLooksFor ?? [],
-    evidenceExamples:
-      standard.evidenceExamples ?? [],
-    commonFindings:
-      standard.commonFindings ?? [],
+    description: standard.description ?? null,
+    requirement: standard.requirement ?? null,
+    surveyorLooksFor: standard.surveyorLooksFor ?? [],
+    evidenceExamples: standard.evidenceExamples ?? [],
+    commonFindings: standard.commonFindings ?? [],
     keywords: standard.keywords ?? [],
-    aiGuidance:
-      standard.aiGuidance ?? null,
-
+    aiGuidance: standard.aiGuidance ?? null,
     referencedAuthorities:
-      standard.referencedAuthorities ??
-      undefined,
-
-    evidenceFrequency:
-      standard.evidenceFrequency ?? null,
-    evidenceRetention:
-      standard.evidenceRetention ?? null,
-    responsibleRole:
-      standard.responsibleRole ?? null,
-    validationMethod:
-      standard.validationMethod ?? null,
-
-    department:
-      standard.department ?? null,
+      standard.referencedAuthorities ?? undefined,
+    evidenceFrequency: standard.evidenceFrequency ?? null,
+    evidenceRetention: standard.evidenceRetention ?? null,
+    responsibleRole: standard.responsibleRole ?? null,
+    validationMethod: standard.validationMethod ?? null,
+    department: standard.department ?? null,
     domain: standard.domain ?? null,
-    category:
-      standard.category ?? null,
-    riskLevel:
-      standard.riskLevel ?? null,
-    priority:
-      standard.priority ?? 1,
-
+    category: standard.category ?? null,
+    riskLevel: standard.riskLevel ?? null,
+    priority: standard.priority ?? 1,
     version: standard.version ?? null,
-    effectiveDate:
-      standard.effectiveDate ?? null,
-    status:
-      standard.status ?? "Active",
-    sourceUrl:
-      standard.sourceUrl ?? null,
-    isCustom:
-      standard.isCustom ?? false,
+    effectiveDate: standard.effectiveDate ?? null,
+    status: standard.status ?? "Active",
+    sourceUrl: standard.sourceUrl ?? null,
+    isCustom: standard.isCustom ?? false,
   };
+}
 
-  if (existingStandard) {
-    await prisma.standard.update({
-      where: {
-        id: existingStandard.id,
-      },
-      data,
-    });
-
-    console.log(
-      `Updated standard ${standard.accreditor} — ${standard.code}`,
-    );
-
-    return;
-  }
-
-  await prisma.standard.create({
-    data,
+async function seedStandards(): Promise<void> {
+  const existingStandards = await prisma.standard.findMany({
+    where: {
+      organizationId: null,
+    },
+    select: {
+      id: true,
+      accreditor: true,
+      code: true,
+    },
   });
 
-  console.log(
-    `Created standard ${standard.accreditor} — ${standard.code}`,
+  const existingByKey = new Map(
+    existingStandards.map((standard) => [
+      standardKey(standard.accreditor, standard.code),
+      standard.id,
+    ]),
+  );
+
+  await runInBatches(
+    coreStandards,
+    WRITE_BATCH_SIZE,
+    async (standard) => {
+      const key = standardKey(
+        standard.accreditor,
+        standard.code,
+      );
+      const existingId = existingByKey.get(key);
+      const data = buildStandardData(standard);
+
+      if (existingId) {
+        await prisma.standard.update({
+          where: {
+            id: existingId,
+          },
+          data,
+        });
+        return;
+      }
+
+      const createdStandard = await prisma.standard.create({
+        data,
+        select: {
+          id: true,
+        },
+      });
+
+      existingByKey.set(key, createdStandard.id);
+    },
   );
 }
 
-async function upsertOperationalTopic(
-  topic: HhsOperationalTopic,
-): Promise<void> {
-  const existingTopic =
-    await prisma.operationalTopic.findFirst({
-      where: {
-        code: topic.code,
-        organizationId: null,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-  const data = {
+function buildOperationalTopicData(topic: HhsOperationalTopic) {
+  return {
     code: topic.code,
-    slug:
-      topic.slug ??
-      createSlug(topic.code),
+    slug: topic.slug ?? createSlug(topic.code),
     name: topic.name,
-
-    description:
-      topic.description ?? null,
-    aiGuidance:
-      topic.aiGuidance ?? null,
-
+    description: topic.description ?? null,
+    aiGuidance: topic.aiGuidance ?? null,
     domain: topic.domain ?? null,
-    category:
-      topic.category ?? null,
-
-    displayOrder:
-      topic.displayOrder ?? 0,
+    category: topic.category ?? null,
+    displayOrder: topic.displayOrder ?? 0,
     icon: topic.icon ?? null,
     color: topic.color ?? null,
-
-    riskLevel:
-      topic.riskLevel ?? null,
-    priority:
-      topic.priority ?? 1,
-
+    riskLevel: topic.riskLevel ?? null,
+    priority: topic.priority ?? 1,
     keywords: topic.keywords ?? [],
-    evidenceExamples:
-      topic.evidenceExamples ?? [],
-    surveyorLooksFor:
-      topic.surveyorLooksFor ?? [],
-    commonFindings:
-      topic.commonFindings ?? [],
-
-    evidenceFrequency:
-      topic.evidenceFrequency ?? null,
-    evidenceRetention:
-      topic.evidenceRetention ?? null,
-    responsibleRole:
-      topic.responsibleRole ?? null,
-    validationMethod:
-      topic.validationMethod ?? null,
-
-    status:
-      topic.status ?? "Active",
-    isCustom:
-      topic.isCustom ?? false,
+    evidenceExamples: topic.evidenceExamples ?? [],
+    surveyorLooksFor: topic.surveyorLooksFor ?? [],
+    commonFindings: topic.commonFindings ?? [],
+    evidenceFrequency: topic.evidenceFrequency ?? null,
+    evidenceRetention: topic.evidenceRetention ?? null,
+    responsibleRole: topic.responsibleRole ?? null,
+    validationMethod: topic.validationMethod ?? null,
+    status: topic.status ?? "Active",
+    isCustom: topic.isCustom ?? false,
   };
+}
 
-  if (existingTopic) {
-    await prisma.operationalTopic.update({
-      where: {
-        id: existingTopic.id,
-      },
-      data,
-    });
-
-    console.log(
-      `Updated operational topic ${topic.code}`,
-    );
-
-    return;
-  }
-
-  await prisma.operationalTopic.create({
-    data,
+async function seedOperationalTopics(): Promise<void> {
+  const existingTopics = await prisma.operationalTopic.findMany({
+    where: {
+      organizationId: null,
+    },
+    select: {
+      id: true,
+      code: true,
+    },
   });
 
-  console.log(
-    `Created operational topic ${topic.code}`,
+  const existingByCode = new Map(
+    existingTopics.map((topic) => [topic.code, topic.id]),
+  );
+
+  await runInBatches(
+    coreOperationalTopics,
+    WRITE_BATCH_SIZE,
+    async (topic) => {
+      const existingId = existingByCode.get(topic.code);
+      const data = buildOperationalTopicData(topic);
+
+      if (existingId) {
+        await prisma.operationalTopic.update({
+          where: {
+            id: existingId,
+          },
+          data,
+        });
+        return;
+      }
+
+      const createdTopic = await prisma.operationalTopic.create({
+        data,
+        select: {
+          id: true,
+        },
+      });
+
+      existingByCode.set(topic.code, createdTopic.id);
+    },
   );
 }
 
 async function seedAccreditorApplicabilityRules(): Promise<number> {
-  /*
-   * This first applicability pass is intentionally narrow.
-   *
-   * It only limits standards that belong to a specific external
-   * accreditor/oversight body. HHS operational standards are left
-   * without an Accreditor rule so they remain universally available
-   * until facility-type and capability rules are added in the next pass.
-   */
+  const supportedAccreditors =
+    accreditorApplicabilityRules.map(
+      (definition) => definition.standardAccreditor,
+    );
+
+  const standards = await prisma.standard.findMany({
+    where: {
+      organizationId: null,
+      status: "Active",
+      accreditor: {
+        in: supportedAccreditors,
+      },
+    },
+    select: {
+      id: true,
+      accreditor: true,
+    },
+  });
+
   await prisma.standardApplicabilityRule.deleteMany({
     where: {
       ruleType: "Accreditor",
@@ -309,44 +308,43 @@ async function seedAccreditorApplicabilityRules(): Promise<number> {
     },
   });
 
-  let processedRules = 0;
+  const definitionByAccreditor = new Map(
+    accreditorApplicabilityRules.map((definition) => [
+      definition.standardAccreditor,
+      definition,
+    ]),
+  );
 
-  for (const definition of accreditorApplicabilityRules) {
-    const standards = await prisma.standard.findMany({
-      where: {
-        organizationId: null,
-        status: "Active",
-        accreditor: definition.standardAccreditor,
-      },
-      select: {
-        id: true,
-        code: true,
-        accreditor: true,
-      },
-    });
+  const ruleData = standards.flatMap((standard) => {
+    const definition = definitionByAccreditor.get(
+      standard.accreditor,
+    );
 
-    for (const standard of standards) {
-      await prisma.standardApplicabilityRule.create({
-        data: {
-          standardId: standard.id,
-          ruleType: "Accreditor",
-          ruleValue: definition.facilityAccreditation,
-          effect: "Include",
-          ruleGroup: "accreditor",
-          matchMode: "All",
-          notes: definition.notes,
-        },
-      });
-
-      processedRules += 1;
-
-      console.log(
-        `Mapped ${standard.accreditor} — ${standard.code} to facility accreditation ${definition.facilityAccreditation}`,
-      );
+    if (!definition) {
+      return [];
     }
+
+    return [
+      {
+        standardId: standard.id,
+        ruleType: "Accreditor",
+        ruleValue: definition.facilityAccreditation,
+        effect: "Include",
+        ruleGroup: "accreditor",
+        matchMode: "All",
+        notes: definition.notes,
+      },
+    ];
+  });
+
+  if (ruleData.length > 0) {
+    await prisma.standardApplicabilityRule.createMany({
+      data: ruleData,
+      skipDuplicates: true,
+    });
   }
 
-  return processedRules;
+  return ruleData.length;
 }
 
 async function main(): Promise<void> {
@@ -355,20 +353,16 @@ async function main(): Promise<void> {
   );
 
   console.log(
-    `Processing ${coreStandards.length} standards...`,
+    `Processing ${coreStandards.length} standards in batches of ${WRITE_BATCH_SIZE}...`,
   );
 
-  for (const standard of coreStandards) {
-    await upsertStandard(standard);
-  }
+  await seedStandards();
 
   console.log(
     `Processing ${coreOperationalTopics.length} operational topics...`,
   );
 
-  for (const topic of coreOperationalTopics) {
-    await upsertOperationalTopic(topic);
-  }
+  await seedOperationalTopics();
 
   console.log(
     "Processing accreditor applicability rules...",

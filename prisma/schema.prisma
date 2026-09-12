@@ -33,8 +33,9 @@ model Organization {
   evidence          Evidence[]
   standards         Standard[]
   operationalTopics OperationalTopic[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Facility {
@@ -43,6 +44,7 @@ model Facility {
   facilityType String
 
   primaryAccreditor      String?
+  accreditations         String[] @default([])
   cmsCertificationNumber String?
   facilityAdministrator  String?
   medicalDirector        String?
@@ -60,6 +62,8 @@ model Facility {
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
+  @@index([facilityType])
+  @@index([primaryAccreditor])
 }
 
 model FacilityCapability {
@@ -246,8 +250,10 @@ model StandardApplicabilityRule {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([standardId, ruleType, ruleValue, effect, ruleGroup])
   @@index([standardId])
   @@index([ruleType])
+  @@index([ruleValue])
   @@index([effect])
   @@index([ruleGroup])
 }
@@ -301,7 +307,6 @@ model OperationalTopic {
   @@index([category])
   @@index([status])
   @@index([displayOrder])
-  @@index([domain, displayOrder])
 }
 
 model StandardOperationalTopic {
