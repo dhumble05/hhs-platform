@@ -1,6 +1,13 @@
+import { env } from "cloudflare:workers";
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default clerkMiddleware();
+export default clerkMiddleware(
+  () => {},
+  () => ({
+    publishableKey: env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    secretKey: env.CLERK_SECRET_KEY,
+  }),
+);
 
 export const config = {
   matcher: [
